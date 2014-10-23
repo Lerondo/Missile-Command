@@ -13,6 +13,7 @@ package src
 	{
 		private var ghost_turret:TurretHandler;
 		private var turrets:Array = [];
+		private var rocket_speed:uint = 3;
 		
 		private function TurretPH():Sprite 
 		{
@@ -28,6 +29,17 @@ package src
 			placeholder.addEventListener(MouseEvent.MOUSE_OUT, hideGhostTurret, false, 0, true);
 			placeholder.addEventListener(MouseEvent.CLICK, addTurret, false, 0, true);
 			return placeholder;
+		}
+		
+		private function createRocket():Sprite 
+		{
+			var rocket:Sprite = new Sprite();
+			// draw the graphics
+			var g:Graphics = rocket.graphics;
+			g.beginFill(0x000000);
+			g.drawCircle(0, 0, 5);
+			g.endFill();
+			return rocket; 
 		}
 		
 		public function Main() 
@@ -51,6 +63,7 @@ package src
 			ghost_turret.visible = false;
 			
 			addChild(ghost_turret);
+			stage.addEventListener(MouseEvent.CLICK, shoot);
 			stage.addEventListener(Event.ENTER_FRAME, gameLoop);
 		}
 		
@@ -83,6 +96,33 @@ package src
 			turret.y = target_placeholder.y;
 			addChild(turret);          
 			turrets.push(turret);
+			e.stopPropagation();
+		}
+		
+		private function shoot(e:MouseEvent):void 
+		{
+			for each(var turret:TurretHandler in turrets)
+			{
+				var new_rocket:Sprite = createRocket();
+				new_rocket.rotation = turret.rotation;
+				new_rocket.x = turret.x + Math.cos(new_rocket.rotation * Math.PI / 180) * 25;
+				new_rocket.y = turret.y + Math.sin(new_rocket.rotation * Math.PI / 180) * 25;              
+				new_rocket.addEventListener(Event.ENTER_FRAME, moveRocket, false, 0, true); 
+				addChild(new_rocket);
+			}
+		}
+		
+		private function moveRocket(e:Event):void 
+		{
+			var rocket:Sprite = e.currentTarget as Sprite;
+			rocket.x += Math.cos(rocket.rotation * Math.PI / 180) * rocket_speed;
+			rocket.y += Math.sin(rocket.rotation * Math.PI / 180) * rocket_speed;
+			
+			if (rocket.x < 0 || rocket.x > stage.stageWidth || rocket.y < 0 || rocket.y > stage.stageHeight) {
+				rocket.removeEventListener(Event.ENTER_FRAME, moveRocket);
+				rocket.parent.removeChild(rocket);
+				rocket = null;
+			}
 		}
 		
 	}
